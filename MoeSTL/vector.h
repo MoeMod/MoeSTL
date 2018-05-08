@@ -1,8 +1,7 @@
 #pragma once
-
-
-#include <malloc.h>
-#include <assert.h>
+/*
+	vector (dynamically-sized array)
+*/
 
 #include <initializer_list>
 using std::initializer_list;
@@ -17,8 +16,10 @@ using std::distance;
 
 namespace MoeSTL {
 
-template<class T> 
-class vector
+template<
+	class T,
+	class Allocator = std::allocator<T>
+> class vector
 {
 public:
 	using value_type = T;
@@ -35,34 +36,33 @@ public:
 	using reverse_iterator = pointer;
 	using const_reverse_iterator = pointer;
 
-	vector() :m_pData(nullptr), m_iSize(0), m_iCapacity(0) {}
+	vector()
+		 :m_pData(nullptr), m_iSize(0), m_iCapacity(0) {}
+	explicit vector(const Allocator& alloc)
+		: m_pData(nullptr), m_iSize(0), m_iCapacity(0), m_Allocator(alloc) {}
 
-	explicit vector(size_type count)
+	vector(size_type count, const T &value, const Allocator& alloc = Allocator())
+		: vector(count, alloc)
+	{
+		MoeSTL::fill_n(m_pData, count, value);
+	}
+
+	explicit vector(size_type count, const Allocator& alloc = Allocator())
+		:vector(alloc)
 	{
 		if (count > 0)
 		{
 			m_iCapacity = m_iSize = count;
-			m_pData = (T *)malloc(sizeof(T) * count);
-			fill_n(m_pData, count, T{});
+			m_pData = m_Allocator.allocate(count);
+			MoeSTL::fill_n(m_pData, count, T{});
 		}
-	}
-
-	vector(size_type count, const T &value) : vector(count)
-	{
-		fill_n(m_pData, count, value);
 	}
 
 	template< class InputIt >
-	vector(InputIt first, InputIt last) : vector()
+	vector(InputIt first, InputIt last, const Allocator& alloc = Allocator())
+		: vector(distance(first, last), alloc)
 	{
-		size_type count = distance(first, last);
-		if (count > 0)
-		{
-			m_iCapacity = m_iSize = count;
-			m_pData = (T *)malloc(sizeof(T) * count);
-			assert(m_pData != NULL);
-			MoeSTL::copy_n(first, m_iCapacity, begin());
-		}
+		MoeSTL::copy(first, last, begin());
 	}
 
 	vector(const vector& other) : vector(other.m_iSize)
@@ -70,8 +70,10 @@ public:
 		m_iSize = other.m_iSize;
 		MoeSTL::copy(other.cbegin(), other.cend(), begin());
 	}
+	vector(const vector& other, const Allocator& alloc)
+		: vector(other), m_Allocator(alloc){}
 
-	void swap(vector &other)
+	void swap(vector &other) noexcept
 	{
 		using MoeSTL::swap;
 		swap(m_pData, other.m_pData);
@@ -83,8 +85,11 @@ public:
 	{
 		swap((vector &)other);
 	}
+	vector(vector&& other, const Allocator& alloc)
+		: vector(other), m_Allocator(alloc) {}
 
-	vector(std::initializer_list<T> init) : vector(init.size())
+	vector(std::initializer_list<T> init, const Allocator& alloc = Allocator())
+		: vector(init.size(), alloc)
 	{
 		m_iSize = init.size();
 		MoeSTL::copy_n(init.begin(), m_iSize, begin());
@@ -93,7 +98,7 @@ public:
 	~vector()
 	{
 		clear();
-		free(m_pData);
+		m_Allocator.deallocate(m_pData, m_iCapacity);
 		m_iCapacity = 0;
 	}
 
@@ -257,12 +262,11 @@ public:
 
 	void reserve(size_type new_cap)
 	{
-		if (m_iCapacity < new_cap)
-		{
-			// alloc memory for new_cap, copy all elements to there, free previous space
-			swap(vector(new_cap) = *this);
-			// and automatically deconstruct previous object(free previous ptr)
-		}
+		if (m_iCapacity >= new_cap)
+			return;
+		// alloc memory for new_cap, copy all elements to there, free previous space
+		swap(vector(new_cap) = *this);
+		// and automatically deconstruct previous object(free previous ptr)
 	}
 	size_type capacity() const noexcept
 	{
@@ -271,10 +275,11 @@ public:
 
 	void shrink_to_fit()
 	{
-		if (m_iCapacity != m_iSize)
-		{
-			swap(vector(*this));
-		}
+		if (m_iCapacity == m_iSize)
+			return;
+		// copy all elements to tempory object, and swap with it
+		swap(vector(*this));
+		// so that you will get the new shrink one and the old one is automatically deleted
 	}
 
 	void clear()
@@ -332,20 +337,23 @@ public:
 
 	void push_back(const T& value)
 	{
-		reserve(m_iSize * 2);
+		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
+		reserve(new_capacity);
 		++m_iSize;
 		back() = value;
 	}
 	void push_back(T&& value)
 	{
-		reserve(m_iSize * 2);
+		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
+		reserve(new_capacity);
 		++m_iSize;
 		back() = value;
 	}
 	template< class... Args >
 	void emplace_back(Args&&... args)
 	{
-		reserve(m_iSize * 2);
+		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
+		reserve(new_capacity);
 		++m_iSize;
 		back() = T(args...);
 	}
@@ -394,6 +402,7 @@ private:
 	T * m_pData;
 	size_t m_iSize;
 	size_t m_iCapacity;
+	Allocator m_Allocator;
 };
 
 template<class T>
