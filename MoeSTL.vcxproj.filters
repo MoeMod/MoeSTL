@@ -47,5 +47,8 @@
     <ClInclude Include="MoeSTL\algorithm\swap.h">
       <Filter>MoeSTL\algorithm</Filter>
     </ClInclude>
+    <ClInclude Include="MoeSTL\algorithm\for_each.h">
+      <Filter>MoeSTL\algorithm</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -149,6 +149,7 @@
     <ClInclude Include="MoeSTL\algorithm.h" />
     <ClInclude Include="MoeSTL\algorithm\copy.h" />
     <ClInclude Include="MoeSTL\algorithm\fill.h" />
+    <ClInclude Include="MoeSTL\algorithm\for_each.h" />
     <ClInclude Include="MoeSTL\algorithm\swap.h" />
     <ClInclude Include="MoeSTL\iterator.h" />
     <ClInclude Include="MoeSTL\vector.h" />

@@ -32,7 +32,7 @@ OutputIt copy_if(InputIt first, InputIt last,
 template< class InputIt, class Size, class OutputIt >
 OutputIt copy_n(InputIt first, Size count, OutputIt result)
 {
-	for (Size i = 0; i < count; ++i)
+	while (count--)
 	{
 		*result++ = *first++;
 	}

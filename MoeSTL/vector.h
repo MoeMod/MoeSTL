@@ -273,17 +273,13 @@ public:
 	{
 		if (m_iCapacity != m_iSize)
 		{
-			vector new_vec(*this);
-			swap(new_vec);
+			swap(vector(*this));
 		}
 	}
 
 	void clear()
 	{
-		for (size_t i = 0; i < m_iSize; ++i)
-		{
-			m_pData[i].~T();
-		}
+		for_each(begin(), end(), [](const T &elem) {elem.~T(); });
 		m_iSize = 0;
 	}
 
@@ -307,8 +303,8 @@ public:
 		size_t n = distance(cbegin(), pos);
 		reserve(size() + count);
 		m_iSize += count;
-
-		move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
+		if(count)
+			move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
 		iterator ret = begin() + n;
 		fill_n(ret, count, value);
 		return ret;
@@ -322,7 +318,8 @@ public:
 		reserve(size() + count);
 		m_iSize += count;
 
-		move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
+		if(count)
+			move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
 		iterator ret = begin() + n;
 		MoeSTL::copy_n(first, count, ret);
 		return ret;
@@ -335,20 +332,20 @@ public:
 
 	void push_back(const T& value)
 	{
-		reserve(m_iSize + 1);
+		reserve(m_iSize * 2);
 		++m_iSize;
 		back() = value;
 	}
 	void push_back(T&& value)
 	{
-		reserve(m_iSize + 1);
+		reserve(m_iSize * 2);
 		++m_iSize;
 		back() = value;
 	}
 	template< class... Args >
 	void emplace_back(Args&&... args)
 	{
-		reserve(m_iSize + 1);
+		reserve(m_iSize * 2);
 		++m_iSize;
 		back() = T(args...);
 	}
@@ -382,10 +379,7 @@ public:
 	{
 		if (count < m_iSize)
 		{
-			for (size_t i = count; i < m_iSize; ++i)
-			{
-				m_pData[i].~T();
-			}
+			for_each(begin() + count, end(), [](const T &elem) {elem.~T(); });
 			m_iSize = count;
 		}
 		else if (count > m_iSize)
