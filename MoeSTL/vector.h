@@ -17,10 +17,23 @@ using std::distance;
 
 namespace MoeSTL {
 
+namespace vector_internal
+{
+	template<class T>
+	struct vector_members
+	{
+		T * m_pData;
+		size_t m_iSize;
+		size_t m_iCapacity;
+	};
+}
+
+
 template<
 	class T,
 	class Allocator = std::allocator<T>
-> class vector : private allocator_base<T, Allocator>
+> class vector : private vector_internal::vector_members<T>, allocator_base<Allocator>
+// in order to put those members before Allocator, i have to put them in a base class...
 {
 public:
 	using value_type = T;
@@ -38,9 +51,9 @@ public:
 	using const_reverse_iterator = pointer;
 
 	vector()
-		 :m_pData(nullptr), m_iSize(0), m_iCapacity(0) {}
+		 : vector_members{ nullptr , 0, 0 } {}
 	explicit vector(const Allocator& alloc)
-		: m_pData(nullptr), m_iSize(0), m_iCapacity(0), allocator_base( alloc ){}
+		 : vector_members{ nullptr , 0, 0 }, allocator_base(alloc) {}
 
 	vector(size_type count, const T &value, const Allocator& alloc = Allocator())
 		: vector(alloc)
@@ -415,11 +428,6 @@ public:
 			m_iSize = count;
 		}
 	}
-
-private:
-	T * m_pData;
-	size_type m_iSize;
-	size_type m_iCapacity;
 	
 };
 
