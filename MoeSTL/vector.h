@@ -23,7 +23,7 @@ template<
 {
 public:
 	using value_type = T;
-	using allocator_type = void; // TBD
+	using allocator_type = Allocator;
 	using size_type = size_t;
 	using difference_type = ptrdiff_t;
 	using reference = T &;
@@ -42,34 +42,25 @@ public:
 		: m_pData(nullptr), m_iSize(0), m_iCapacity(0), m_Allocator(alloc) {}
 
 	vector(size_type count, const T &value, const Allocator& alloc = Allocator())
-		: vector(count, alloc)
+		: vector(alloc)
 	{
-		MoeSTL::fill_n(m_pData, count, value);
+		resize(count, value);
 	}
 
 	explicit vector(size_type count, const Allocator& alloc = Allocator())
 		:vector(alloc)
 	{
-		if (count > 0)
-		{
-			m_iCapacity = m_iSize = count;
-			m_pData = m_Allocator.allocate(count);
-			MoeSTL::fill_n(m_pData, count, T{});
-		}
+		resize(count);
 	}
 
 	template< class InputIt >
 	vector(InputIt first, InputIt last, const Allocator& alloc = Allocator())
-		: vector(distance(first, last), alloc)
+		: vector(alloc)
 	{
-		MoeSTL::copy(first, last, begin());
+		assign(first, last);
 	}
 
-	vector(const vector& other) : vector(other.m_iSize)
-	{
-		m_iSize = other.m_iSize;
-		MoeSTL::copy(other.cbegin(), other.cend(), begin());
-	}
+	vector(const vector& other) : vector(other.begin(), other.end()){}
 	vector(const vector& other, const Allocator& alloc)
 		: vector(other), m_Allocator(alloc){}
 
@@ -89,11 +80,7 @@ public:
 		: vector(other), m_Allocator(alloc) {}
 
 	vector(std::initializer_list<T> init, const Allocator& alloc = Allocator())
-		: vector(init.size(), alloc)
-	{
-		m_iSize = init.size();
-		MoeSTL::copy_n(init.begin(), m_iSize, begin());
-	}
+		: vector(init.begin(), init.end(), alloc) {}
 
 	~vector()
 	{
@@ -104,10 +91,7 @@ public:
 
 	vector& operator=(const vector& other)
 	{
-		reserve(other.size());
-		clear();
-		m_iSize = other.m_iSize;
-		MoeSTL::copy(other.cbegin(), other.cend(), begin());
+		assign(other.begin(), other.end());
 		return *this;
 	}
 	vector& operator=(vector&& other)
@@ -118,28 +102,30 @@ public:
 	}
 	vector& operator=(std::initializer_list<T> ilist)
 	{
-		reserve(ilist.size());
-		clear();
-		MoeSTL::copy_n(ilist.begin(), ilist.size(), begin());
+		assign(ilist.begin(), ilist.end());
 		return *this;
 	}
 
 	void assign(size_type count, const T& value)
 	{
-		reserve(count);
 		clear();
+		reserve(count);
+		for (auto p = m_pData; p < m_pData + count; ++p)
+			new(p) T(value);
 		m_iSize = count;
-		fill_n(m_pData, count, value);
 	}
 
 	template< class InputIt >
 	void assign(InputIt first, InputIt last)
 	{
 		size_type count = distance(first, last);
-		reserve(count);
 		clear();
+		reserve(count);
+
+		auto input = first;
+		for (auto p = m_pData; p < m_pData + count; ++p)
+			new(p) T(*input++);
 		m_iSize = count;
-		MoeSTL::copy(first, last, begin());
 	}
 
 	void assign(std::initializer_list<T> ilist)
@@ -222,14 +208,8 @@ public:
 		return data() + size();
 	}
 
-	iterator rbegin() noexcept
-	{
-		return data() + size() - 1;
-	}
-	iterator rend() noexcept
-	{
-		return data() - 1;
-	}
+	iterator rbegin() noexcept;
+	iterator rend() noexcept;
 	const_iterator rbegin() const noexcept
 	{
 		return crbegin();
@@ -238,14 +218,8 @@ public:
 	{
 		return crend();
 	}
-	const_iterator crbegin() const noexcept
-	{
-		return data() + size() - 1;
-	}
-	const_iterator crend() const noexcept
-	{
-		return data() - 1;
-	}
+	const_iterator crbegin() const noexcept;
+	const_iterator crend() const noexcept;
 
 	bool empty() const noexcept
 	{
@@ -264,9 +238,21 @@ public:
 	{
 		if (m_iCapacity >= new_cap)
 			return;
-		// alloc memory for new_cap, copy all elements to there, free previous space
-		swap(vector(new_cap) = *this);
-		// and automatically deconstruct previous object(free previous ptr)
+		// alloc memory for new_cap
+		auto new_data = m_Allocator.allocate(new_cap);
+
+		// move all elements to there and deconstruct previous object
+		auto p = new_data;
+		for (auto iter = begin(); iter != end(); ++iter)
+		{
+			new(p++) T(std::move(*iter));
+			iter->~T();
+		}
+			
+		// free previous space
+		m_Allocator.deallocate(m_pData, m_iCapacity);
+		m_pData = new_data;
+		m_iCapacity = new_cap;
 	}
 	size_type capacity() const noexcept
 	{
@@ -294,39 +280,67 @@ public:
 	}
 	iterator insert(const_iterator pos, T&& value)
 	{
-		size_t n = distance(cbegin(), pos);
+		size_type n = distance(cbegin(), pos);
 		reserve(size() + 1);
-		m_iSize++;
+		++m_iSize;
 
-		move_backward(begin() + n, end() - 1, end()); // end isn't in [pos, cend - 1)
-		(*this)[n] = value;
+		// move to back
+		for (auto right = end() - 2; right != begin() + n - 1; --right)
+		{
+			new(right + 1) T(std::move(*(right)));
+		}
+		// construct new elem
+		new(m_pData + n) T(value);
 		return begin() + n;
 	}
 
 	iterator insert(const_iterator pos, size_type count, const T& value)
 	{
-		size_t n = distance(cbegin(), pos);
-		reserve(size() + count);
-		m_iSize += count;
-		if(count)
-			move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
+		size_type n = distance(cbegin(), pos);
+		
+		if (count)
+		{
+			// alloc memory
+			reserve(size() + count);
+			m_iSize += count;
+			// move to back
+			for (auto right = end() - count - 1; right != begin() + n - 1; --right)
+			{
+				new(right + count) T(std::move(*(right)));
+			}
+
+		}
+		// construct new elems
 		iterator ret = begin() + n;
-		fill_n(ret, count, value);
+		auto p = ret;
+		while (p != ret + count)
+			new(p++) T(value);
+		
 		return ret;
 	}
 
 	template< class InputIt >
 	iterator insert(const_iterator pos, InputIt first, InputIt last)
 	{
-		size_t n = distance(cbegin(), pos);
+		size_type n = distance(cbegin(), pos);
 		auto count = distance(first, last);
-		reserve(size() + count);
-		m_iSize += count;
 
-		if(count)
-			move_backward(begin() + n, end() - count, end()); // pos isn't in [pos + 1, end)
+		if (count)
+		{
+			// alloc memory
+			reserve(size() + count);
+			m_iSize += count;
+			// move to back
+			for(auto right = end() - count - 1; right != begin() + n - 1; --right)
+			{
+				new(right + count) T(std::move(*(right)));
+			}
+		}
+		// construct new elems
 		iterator ret = begin() + n;
-		MoeSTL::copy_n(first, count, ret);
+		auto p = ret;
+		for (auto iter = first; iter != last; ++iter)
+			new(p++) T(*iter);
 		return ret;
 	}
 
@@ -340,14 +354,14 @@ public:
 		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
 		reserve(new_capacity);
 		++m_iSize;
-		back() = value;
+		new(m_pData + m_iSize - 1) T(value);
 	}
 	void push_back(T&& value)
 	{
 		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
 		reserve(new_capacity);
 		++m_iSize;
-		back() = value;
+		new(m_pData + m_iSize - 1) T(value);
 	}
 	template< class... Args >
 	void emplace_back(Args&&... args)
@@ -355,19 +369,19 @@ public:
 		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
 		reserve(new_capacity);
 		++m_iSize;
-		back() = T(args...);
+		new(m_pData + m_iSize - 1) T(args...);
 	}
 
 	iterator erase(iterator pos)
 	{
-		MoeSTL::copy(pos + 1, end(), pos); // pos isn't in [pos + 1, end)
+		MoeSTL::move(pos + 1, end(), pos); // pos isn't in [pos + 1, end)
 		resize(size() - 1);
 		return pos;
 	}
 
 	iterator erase(iterator first, iterator last)
 	{
-		MoeSTL::copy(last, end(), first); // first isn't in [last + 1, end)
+		MoeSTL::move(last, end(), first); // first isn't in [last + 1, end)
 		resize(size() - distance(first, last));
 		return first;
 	}
@@ -393,15 +407,18 @@ public:
 		else if (count > m_iSize)
 		{
 			reserve(count);
-			fill_n(m_pData + m_iSize, count - m_iSize, value);
+			
+			// construct items
+			for (auto p = m_pData + m_iSize; p < m_pData + count; ++p)
+				new(p) T(value);
 			m_iSize = count;
 		}
 	}
 
 private:
 	T * m_pData;
-	size_t m_iSize;
-	size_t m_iCapacity;
+	size_type m_iSize;
+	size_type m_iCapacity;
 	Allocator m_Allocator;
 };
 
