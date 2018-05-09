@@ -11,9 +11,11 @@ using std::out_of_range;
 using std::move;
 #include <iterator>
 using std::distance;
+using std::reverse_iterator;
 
 #include "algorithm.h"
 #include "extra/allocator_base.h"
+#include "extra/pointer_iterator.h"
 
 namespace MoeSTL {
 
@@ -45,10 +47,11 @@ public:
 	using pointer = T *;
 	using const_pointer = const T *;
 
-	using iterator = pointer;
-	using const_iterator = const_pointer;
-	using reverse_iterator = pointer;
-	using const_reverse_iterator = pointer;
+	
+	using iterator = pointer_iterator<T>;
+	using const_iterator = const_pointer_iterator<T>;
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 	vector()
 		 : vector_members{ nullptr , 0, 0 } {}
@@ -165,7 +168,7 @@ public:
 	{
 		return m_pData[pos];
 	}
-	reference operator[](size_type pos) const
+	const_reference operator[](size_type pos) const
 	{
 		return const_cast<const_pointer>(m_pData)[pos];
 	}
@@ -199,11 +202,11 @@ public:
 
 	iterator begin() noexcept
 	{
-		return data();
+		return iterator(data());
 	}
 	iterator end() noexcept
 	{
-		return data() + size();
+		return iterator(data() + size());
 	}
 	const_iterator begin() const noexcept
 	{
@@ -215,25 +218,37 @@ public:
 	}
 	const_iterator cbegin() const noexcept
 	{
-		return data();
+		return const_iterator(data());
 	}
 	const_iterator cend() const noexcept
 	{
-		return data() + size();
+		return const_iterator(data() + size());
 	}
 
-	iterator rbegin() noexcept;
-	iterator rend() noexcept;
-	const_iterator rbegin() const noexcept
+	reverse_iterator rbegin()
+	{
+		return reverse_iterator(end());
+	}
+	reverse_iterator rend() noexcept
+	{
+		return reverse_iterator(begin());
+	}
+	const_reverse_iterator rbegin() const noexcept
 	{
 		return crbegin();
 	}
-	const_iterator rend() const noexcept
+	const_reverse_iterator rend() const noexcept
 	{
 		return crend();
 	}
-	const_iterator crbegin() const noexcept;
-	const_iterator crend() const noexcept;
+	const_reverse_iterator crbegin() const noexcept
+	{
+		return reverse_iterator(cend());
+	}
+	const_reverse_iterator crend() const noexcept
+	{
+		return reverse_iterator(cbegin());
+	}
 
 	bool empty() const noexcept
 	{
@@ -345,17 +360,16 @@ public:
 			reserve(size() + count);
 			m_iSize += count;
 			// move to back
-			for(auto right = end() - count - 1; right != begin() + n - 1; --right)
+			for(auto right = data() + size() - count - 1; right != data() + n - 1; --right)
 			{
 				new(right + count) T(std::move(*(right)));
 			}
 		}
 		// construct new elems
-		iterator ret = begin() + n;
-		auto p = ret;
+		auto p = data() + n;
 		for (auto iter = first; iter != last; ++iter)
 			new(p++) T(*iter);
-		return ret;
+		return begin() + n;
 	}
 
 	iterator insert(const_iterator pos, std::initializer_list<T> ilist)

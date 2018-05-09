@@ -56,5 +56,11 @@
     <ClInclude Include="MoeSTL\extra\allocator_base.h">
       <Filter>MoeSTL\extra</Filter>
     </ClInclude>
+    <ClInclude Include="MoeSTL\array.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\extra\pointer_iterator.h">
+      <Filter>MoeSTL\extra</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

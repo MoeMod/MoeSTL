@@ -151,7 +151,9 @@
     <ClInclude Include="MoeSTL\algorithm\fill.h" />
     <ClInclude Include="MoeSTL\algorithm\for_each.h" />
     <ClInclude Include="MoeSTL\algorithm\swap.h" />
+    <ClInclude Include="MoeSTL\array.h" />
     <ClInclude Include="MoeSTL\extra\allocator_base.h" />
+    <ClInclude Include="MoeSTL\extra\pointer_iterator.h" />
     <ClInclude Include="MoeSTL\iterator.h" />
     <ClInclude Include="MoeSTL\vector.h" />
   </ItemGroup>
