@@ -23,7 +23,7 @@
     <ProjectGuid>{D3CF8449-546B-4822-9D7B-05B33F5272FC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>MoeSTL</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>7.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -151,6 +151,7 @@
     <ClInclude Include="MoeSTL\algorithm\fill.h" />
     <ClInclude Include="MoeSTL\algorithm\for_each.h" />
     <ClInclude Include="MoeSTL\algorithm\swap.h" />
+    <ClInclude Include="MoeSTL\extra\allocator_base.h" />
     <ClInclude Include="MoeSTL\iterator.h" />
     <ClInclude Include="MoeSTL\vector.h" />
   </ItemGroup>

@@ -22,6 +22,9 @@
     <Filter Include="MoeSTL\iterator">
       <UniqueIdentifier>{3f01f230-db35-4d0f-906a-157ca8521edf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MoeSTL\extra">
+      <UniqueIdentifier>{354408eb-50f2-46f1-88fc-71ea9f112919}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MoeSTL.cpp">
@@ -49,6 +52,9 @@
     </ClInclude>
     <ClInclude Include="MoeSTL\algorithm\for_each.h">
       <Filter>MoeSTL\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\extra\allocator_base.h">
+      <Filter>MoeSTL\extra</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

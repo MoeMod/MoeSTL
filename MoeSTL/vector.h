@@ -13,13 +13,14 @@ using std::move;
 using std::distance;
 
 #include "algorithm.h"
+#include "extra/allocator_base.h"
 
 namespace MoeSTL {
 
 template<
 	class T,
 	class Allocator = std::allocator<T>
-> class vector
+> class vector : private allocator_base<T, Allocator>
 {
 public:
 	using value_type = T;
@@ -39,7 +40,7 @@ public:
 	vector()
 		 :m_pData(nullptr), m_iSize(0), m_iCapacity(0) {}
 	explicit vector(const Allocator& alloc)
-		: m_pData(nullptr), m_iSize(0), m_iCapacity(0), m_Allocator(alloc) {}
+		: m_pData(nullptr), m_iSize(0), m_iCapacity(0), allocator_base( alloc ){}
 
 	vector(size_type count, const T &value, const Allocator& alloc = Allocator())
 		: vector(alloc)
@@ -62,7 +63,7 @@ public:
 
 	vector(const vector& other) : vector(other.begin(), other.end()){}
 	vector(const vector& other, const Allocator& alloc)
-		: vector(other), m_Allocator(alloc){}
+		: vector(other), vector_base{ alloc } {}
 
 	void swap(vector &other) noexcept
 	{
@@ -77,7 +78,7 @@ public:
 		swap((vector &)other);
 	}
 	vector(vector&& other, const Allocator& alloc)
-		: vector(other), m_Allocator(alloc) {}
+		: vector(other), vector_base{ alloc } {}
 
 	vector(std::initializer_list<T> init, const Allocator& alloc = Allocator())
 		: vector(init.begin(), init.end(), alloc) {}
@@ -85,7 +86,7 @@ public:
 	~vector()
 	{
 		clear();
-		m_Allocator.deallocate(m_pData, m_iCapacity);
+		GetAllocator().deallocate(m_pData, m_iCapacity);
 		m_iCapacity = 0;
 	}
 
@@ -239,7 +240,7 @@ public:
 		if (m_iCapacity >= new_cap)
 			return;
 		// alloc memory for new_cap
-		auto new_data = m_Allocator.allocate(new_cap);
+		auto new_data = GetAllocator().allocate(new_cap);
 
 		// move all elements to there and deconstruct previous object
 		auto p = new_data;
@@ -250,7 +251,7 @@ public:
 		}
 			
 		// free previous space
-		m_Allocator.deallocate(m_pData, m_iCapacity);
+		GetAllocator().deallocate(m_pData, m_iCapacity);
 		m_pData = new_data;
 		m_iCapacity = new_cap;
 	}
@@ -419,7 +420,7 @@ private:
 	T * m_pData;
 	size_type m_iSize;
 	size_type m_iCapacity;
-	Allocator m_Allocator;
+	
 };
 
 template<class T>
