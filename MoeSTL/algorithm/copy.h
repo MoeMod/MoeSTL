@@ -1,7 +1,6 @@
 #pragma once
 
-#include <utility>
-using std::move;
+#include "../utility/move.h"
 
 namespace MoeSTL {
 
@@ -54,7 +53,7 @@ OutputIt move(InputIt first, InputIt last, OutputIt d_first)
 {
 	while (first != last)
 	{
-		*d_first++ = std::move(*first++);
+		*d_first++ = MoeSTL::move(*first++);
 	}
 	return d_first;
 }
@@ -64,7 +63,7 @@ BidirIt2 move_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
 {
 	while (first != last)
 	{
-		*(--d_last) = std::move(*(--last));
+		*(--d_last) = MoeSTL::move(*(--last));
 	}
 	return d_last;
 }

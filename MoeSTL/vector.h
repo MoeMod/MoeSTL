@@ -7,13 +7,12 @@
 using std::initializer_list;
 #include <stdexcept>
 using std::out_of_range;
-#include <utility>
-using std::move;
 #include <iterator>
 using std::distance;
 using std::reverse_iterator;
 
-#include "algorithm.h"
+#include "utility/move.h"
+#include "memory/uninitialized.h"
 #include "extra/allocator_base.h"
 #include "extra/pointer_iterator.h"
 
@@ -127,8 +126,9 @@ public:
 	{
 		clear();
 		reserve(count);
-		for (auto p = m_pData; p < m_pData + count; ++p)
-			new(p) T(value);
+		//for (auto p = m_pData; p < m_pData + count; ++p)
+		//	new(p) T(value);
+		MoeSTL::uninitialized_fill_n(m_pData, count, value);
 		m_iSize = count;
 	}
 
@@ -139,9 +139,10 @@ public:
 		clear();
 		reserve(count);
 
-		auto input = first;
-		for (auto p = m_pData; p < m_pData + count; ++p)
-			new(p) T(*input++);
+		//auto input = first;
+		//for (auto p = m_pData; p < m_pData + count; ++p)
+		//	new(p) T(*input++);
+		MoeSTL::uninitialized_copy(first, last, m_pData);
 		m_iSize = count;
 	}
 
@@ -271,12 +272,13 @@ public:
 		auto new_data = GetAllocator().allocate(new_cap);
 
 		// move all elements to there and deconstruct previous object
-		auto p = new_data;
+		/*auto p = new_data;
 		for (auto iter = begin(); iter != end(); ++iter)
 		{
 			new(p++) T(std::move(*iter));
 			iter->~T();
-		}
+		}*/
+		MoeSTL::uninitialized_move(begin(), end(), new_data);
 			
 		// free previous space
 		GetAllocator().deallocate(m_pData, m_iCapacity);
@@ -316,7 +318,7 @@ public:
 		// move to back
 		for (auto right = end() - 2; right != begin() + n - 1; --right)
 		{
-			new(right + 1) T(std::move(*(right)));
+			new(right + 1) T(MoeSTL::move(*(right)));
 		}
 		// construct new elem
 		new(m_pData + n) T(value);
@@ -335,17 +337,17 @@ public:
 			// move to back
 			for (auto right = end() - count - 1; right != begin() + n - 1; --right)
 			{
-				new(right + count) T(std::move(*(right)));
+				new(right + count) T(MoeSTL::move(*(right)));
 			}
 
 		}
 		// construct new elems
-		iterator ret = begin() + n;
+		/*iterator ret = begin() + n;
 		auto p = ret;
 		while (p != ret + count)
-			new(p++) T(value);
-		
-		return ret;
+			new(p++) T(value);*/
+		MoeSTL::uninitialized_fill(ret, count, data() + n);
+		return begin() + n;
 	}
 
 	template< class InputIt >
@@ -362,13 +364,14 @@ public:
 			// move to back
 			for(auto right = data() + size() - count - 1; right != data() + n - 1; --right)
 			{
-				new(right + count) T(std::move(*(right)));
+				new(right + count) T(MoeSTL::move(*(right)));
 			}
 		}
 		// construct new elems
-		auto p = data() + n;
+		/*auto p = data() + n;
 		for (auto iter = first; iter != last; ++iter)
-			new(p++) T(*iter);
+			new(p++) T(*iter);*/
+		MoeSTL::uninitialized_copy(first, last, data() + n);
 		return begin() + n;
 	}
 
@@ -437,8 +440,9 @@ public:
 			reserve(count);
 			
 			// construct items
-			for (auto p = m_pData + m_iSize; p < m_pData + count; ++p)
-				new(p) T(value);
+			/*for (auto p = m_pData + m_iSize; p < m_pData + count; ++p)
+				new(p) T(value);*/
+			MoeSTL::uninitialized_fill_n(m_pData + m_iSize, count - m_iSize, value);
 			m_iSize = count;
 		}
 	}

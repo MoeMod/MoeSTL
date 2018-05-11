@@ -25,6 +25,12 @@
     <Filter Include="MoeSTL\extra">
       <UniqueIdentifier>{354408eb-50f2-46f1-88fc-71ea9f112919}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MoeSTL\memory">
+      <UniqueIdentifier>{c70a5469-1496-4872-848c-ad93e0016ac8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MoeSTL\utility">
+      <UniqueIdentifier>{da20adc6-fc75-46bb-b0f3-5cabc6965897}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MoeSTL.cpp">
@@ -47,9 +53,6 @@
     <ClInclude Include="MoeSTL\iterator.h">
       <Filter>MoeSTL</Filter>
     </ClInclude>
-    <ClInclude Include="MoeSTL\algorithm\swap.h">
-      <Filter>MoeSTL\algorithm</Filter>
-    </ClInclude>
     <ClInclude Include="MoeSTL\algorithm\for_each.h">
       <Filter>MoeSTL\algorithm</Filter>
     </ClInclude>
@@ -61,6 +64,18 @@
     </ClInclude>
     <ClInclude Include="MoeSTL\extra\pointer_iterator.h">
       <Filter>MoeSTL\extra</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\memory\uninitialized.h">
+      <Filter>MoeSTL\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\memory.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\utility\swap.h">
+      <Filter>MoeSTL\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\utility\move.h">
+      <Filter>MoeSTL\utility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

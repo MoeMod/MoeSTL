@@ -21,11 +21,11 @@ public:
 	const_pointer_iterator operator++(int) { return const_pointer_iterator(ptr++); }
 	const_pointer_iterator& operator--() { return --ptr, *this; }
 	const_pointer_iterator operator--(int) { return const_pointer_iterator(ptr--); }
-	const_pointer_iterator& operator+=(int n) { return ptr += n, *this; }
-	const_pointer_iterator& operator-=(int n) { return ptr -= n, *this; }
-	const_pointer_iterator operator+(int n) { return const_pointer_iterator(ptr + n); }
-	friend const_pointer_iterator operator+(int n, const const_pointer_iterator &iter) { return iter + n; }
-	const_pointer_iterator operator-(int n) { return const_pointer_iterator(ptr - n); }
+	const_pointer_iterator& operator+=(difference_type n) { return ptr += n, *this; }
+	const_pointer_iterator& operator-=(difference_type n) { return ptr -= n, *this; }
+	const_pointer_iterator operator+(difference_type n) { return const_pointer_iterator(ptr + n); }
+	friend const_pointer_iterator operator+(difference_type n, const const_pointer_iterator &iter) { return iter + n; }
+	const_pointer_iterator operator-(difference_type n) { return const_pointer_iterator(ptr - n); }
 	difference_type operator-(const const_pointer_iterator & other) const { return ptr - other.ptr; }
 
 	bool operator==(const_pointer_iterator other) const { return ptr == other.ptr; }
@@ -57,11 +57,11 @@ public:
 	pointer_iterator operator++(int) { return pointer_iterator(ptr++); }
 	pointer_iterator& operator--() { return --ptr, *this; }
 	pointer_iterator operator--(int) { return pointer_iterator(ptr--); }
-	pointer_iterator& operator+=(int n) { return ptr += n, *this; }
-	pointer_iterator& operator-=(int n) { return ptr -= n, *this; }
-	pointer_iterator operator+(int n) const { return pointer_iterator(ptr + n); }
-	friend pointer_iterator operator+(int n, const pointer_iterator &iter) { return iter + n; }
-	pointer_iterator operator-(int n) const { return pointer_iterator(ptr - n); }
+	pointer_iterator& operator+=(difference_type n) { return ptr += n, *this; }
+	pointer_iterator& operator-=(difference_type n) { return ptr -= n, *this; }
+	pointer_iterator operator+(difference_type n) const { return pointer_iterator(ptr + n); }
+	friend pointer_iterator operator+(difference_type n, const pointer_iterator &iter) { return iter + n; }
+	pointer_iterator operator-(difference_type n) const { return pointer_iterator(ptr - n); }
 	difference_type operator-(const pointer_iterator &other) const { return ptr - other.ptr; }
 
 	bool operator==(pointer_iterator other) const { return ptr == other.ptr; }

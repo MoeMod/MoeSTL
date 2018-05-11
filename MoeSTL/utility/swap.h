@@ -1,7 +1,6 @@
 #pragma once
 
-#include <utility>
-using std::move;
+#include "move.h"
 
 namespace MoeSTL {
 
@@ -10,7 +9,7 @@ void swap(T& a, T& b)
 {
 	T temp = a;
 	a = b;
-	b = std::move(temp);
+	b = MoeSTL::move(temp);
 }
 
 }
