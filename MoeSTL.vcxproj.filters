@@ -77,5 +77,8 @@
     <ClInclude Include="MoeSTL\utility\move.h">
       <Filter>MoeSTL\utility</Filter>
     </ClInclude>
+    <ClInclude Include="MoeSTL\list.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

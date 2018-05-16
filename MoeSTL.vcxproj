@@ -41,13 +41,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -153,6 +153,7 @@
     <ClInclude Include="MoeSTL\extra\allocator_base.h" />
     <ClInclude Include="MoeSTL\extra\pointer_iterator.h" />
     <ClInclude Include="MoeSTL\iterator.h" />
+    <ClInclude Include="MoeSTL\list.h" />
     <ClInclude Include="MoeSTL\memory.h" />
     <ClInclude Include="MoeSTL\memory\uninitialized.h" />
     <ClInclude Include="MoeSTL\utility\move.h" />

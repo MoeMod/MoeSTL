@@ -12,7 +12,7 @@ class allocator_base : private Allocator
 {
 protected:
 	allocator_base(const Allocator &alloc) : Allocator(alloc) {}
-	Allocator & GetAllocator()
+	Allocator get_allocator()
 	{
 		return *this;
 	}

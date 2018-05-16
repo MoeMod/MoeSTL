@@ -1,12 +1,16 @@
 #pragma once
 /*
 	vector (dynamically-sized array)
+
+	TODO:
+	* full exceptions support
 */
 
 #include <initializer_list>
 using std::initializer_list;
 #include <stdexcept>
 using std::out_of_range;
+
 #include <iterator>
 using std::distance;
 using std::reverse_iterator;
@@ -33,7 +37,7 @@ namespace vector_internal
 template<
 	class T,
 	class Allocator = std::allocator<T>
-> class vector : private vector_internal::vector_members<T>, allocator_base<Allocator>
+> class vector : private vector_internal::vector_members<T>, public allocator_base<Allocator>
 // in order to put those members before Allocator, i have to put them in a base class...
 {
 public:
@@ -101,7 +105,7 @@ public:
 	~vector()
 	{
 		clear();
-		GetAllocator().deallocate(m_pData, m_iCapacity);
+		get_allocator().deallocate(m_pData, m_iCapacity);
 		m_iCapacity = 0;
 	}
 
@@ -269,7 +273,7 @@ public:
 		if (m_iCapacity >= new_cap)
 			return;
 		// alloc memory for new_cap
-		auto new_data = GetAllocator().allocate(new_cap);
+		auto new_data = get_allocator().allocate(new_cap);
 
 		// move all elements to there and deconstruct previous object
 		/*auto p = new_data;
@@ -281,7 +285,7 @@ public:
 		MoeSTL::uninitialized_move(begin(), end(), new_data);
 			
 		// free previous space
-		GetAllocator().deallocate(m_pData, m_iCapacity);
+		get_allocator().deallocate(m_pData, m_iCapacity);
 		m_pData = new_data;
 		m_iCapacity = new_cap;
 	}
@@ -321,7 +325,7 @@ public:
 			new(right + 1) T(MoeSTL::move(*(right)));
 		}
 		// construct new elem
-		new(m_pData + n) T(value);
+		new(m_pData + n) T(MoeSTL::move(value));
 		return begin() + n;
 	}
 
@@ -392,7 +396,7 @@ public:
 		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
 		reserve(new_capacity);
 		++m_iSize;
-		new(m_pData + m_iSize - 1) T(value);
+		new(m_pData + m_iSize - 1) T(MoeSTL::move(value));
 	}
 	template< class... Args >
 	void emplace_back(Args&&... args)
@@ -400,7 +404,7 @@ public:
 		auto new_capacity = m_iSize ? m_iSize * 2 : 4;
 		reserve(new_capacity);
 		++m_iSize;
-		new(m_pData + m_iSize - 1) T(args...);
+		new(m_pData + m_iSize - 1) T(std::forward<Args>(args)...);
 	}
 
 	iterator erase(iterator pos)
