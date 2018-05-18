@@ -13,7 +13,10 @@ using std::initializer_list;
 #include <memory>
 using std::allocator;
 using std::allocator_traits;
+#include <tuple>
+using std::tie;
 
+#include "utility/swap.h"
 #include "extra/allocator_base.h"
 
 namespace MoeSTL {
@@ -36,7 +39,7 @@ namespace MoeSTL {
 		template<class T>
 		struct list_members : list_node<T>
 		{
-			list_members() : list_node{nullptr, nullptr }, m_iSize(0) {}
+			list_members() : list_node{this, this }, m_iSize(0) {}
 			list_node *&head() { return next; }
 			list_node *&tail() { return prev; }
 			size_t m_iSize;
@@ -236,7 +239,7 @@ public:
 			get_rebind().deallocate(cur, 1); // free memory
 		}
 
-		tail() = head() = nullptr;
+		tail() = head() = this;
 		m_iSize = 0;
 	}
 
@@ -254,9 +257,9 @@ public:
 			throw;
 		}
 
-		if (!head())
+		if (head() == this)
 			head() = p;
-		if (!tail())
+		if (tail() == this)
 		{
 			p->prev = this;
 		}
@@ -285,9 +288,9 @@ public:
 			throw;
 		}
 
-		if (!head())
+		if (head() == this)
 			head() = p;
-		if (!tail())
+		if (tail() == this)
 		{
 			p->prev = this;
 		}
@@ -317,9 +320,9 @@ public:
 			throw;
 		}
 
-		if (!head())
+		if (head() == this)
 			head() = p;
-		if (!tail())
+		if (tail() == this)
 		{
 			p->prev = this;
 		}
@@ -341,8 +344,142 @@ public:
 
 		p->data.~T();
 		get_rebind().deallocate(p, 1);
+
+		--m_iSize;
 	}
 
+	void push_front(const T& value)
+	{
+		node_with_data_t *p = get_rebind().allocate(1);
+
+		try
+		{
+			new(&p->data) T(value);
+		}
+		catch (...)
+		{
+			get_rebind().deallocate(p, 1);
+			throw;
+		}
+
+		if (tail() == this)
+			tail() = p;
+		if (head() == this)
+		{
+			p->next = this;
+		}
+		else
+		{
+			head()->prev = p;
+			p->next = head();
+		}
+		this->next = p;
+		p->prev = this;
+
+		++m_iSize;
+	}
+
+	void push_front(const T&& value)
+	{
+		node_with_data_t *p = get_rebind().allocate(1);
+
+		try
+		{
+			new(&p->data) T(MoeSTL::move(value));
+		}
+		catch (...)
+		{
+			get_rebind().deallocate(p, 1);
+			throw;
+		}
+
+		if (tail() == this)
+			tail() = p;
+		if (head() == this)
+		{
+			p->next = this;
+		}
+		else
+		{
+			head()->prev = p;
+			p->next = head();
+		}
+		this->next = p;
+		p->prev = this;
+
+		++m_iSize;
+	}
+
+	template< class... Args >
+	void emplace_front(Args&&... args)
+	{
+		node_with_data_t *p = get_rebind().allocate(1);
+
+		try
+		{
+			new(&p->data) T(MoeSTL::forward<Args>(args)...);
+		}
+		catch (...)
+		{
+			get_rebind().deallocate(p, 1);
+			throw;
+		}
+
+		if (tail() == this)
+			tail() = p;
+		if (head() == this)
+		{
+			p->next = this;
+		}
+		else
+		{
+			head()->prev = p;
+			p->next = head();
+		}
+		this->next = p;
+		p->prev = this;
+
+		++m_iSize;
+	}
+	void pop_front()
+	{
+		node_with_data_t *p = static_cast<node_with_data_t *>(head());
+		head() = p->next;
+		head()->prev = this;
+
+		p->data.~T();
+		get_rebind().deallocate(p, 1);
+
+		--m_iSize;
+	}
+
+	void swap(list& other)
+	{
+		/*if (this == &other)
+			return;*/
+
+		using std::swap;
+		using std::tie;
+
+		swap(tie(this->prev, this->next, this->m_iSize), tie(other.prev, other.next, other.m_iSize));
+
+		auto fix = [](list& lst)
+		{
+			if (!lst.m_iSize)
+				lst.prev = lst.next = &lst;
+			else
+				lst.head()->prev = lst.tail()->next = &lst;
+		};
+
+		fix(*this);
+		fix(other);
+	}
 };
 
+template< class T, class Alloc >
+void swap(list<T, Alloc>& lhs,
+	list<T, Alloc>& rhs)
+{
+	return lhs.swap(rhs);
+}
 }
