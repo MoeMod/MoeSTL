@@ -38,6 +38,29 @@ ForwardIt uninitialized_copy(InputIt first, InputIt last, ForwardIt d_first)
 	}
 }
 
+template< class BidirIt1, class BidirIt2 >
+BidirIt2 uninitialized_copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
+{
+	using ValueType = typename std::iterator_traits<BidirIt2>::value_type;
+	BidirIt2 current = d_last;
+	try
+	{
+		while (first != last)
+		{
+			new (static_cast<void*>(MoeSTL::addressof(*(--current)))) ValueType(*(--last));
+		}
+		return current;
+	}
+	catch (...)
+	{
+		while (d_last != current)
+		{
+			(--d_last)->~ValueType();
+		}
+		throw;
+	}
+}
+
 template< class InputIt, class Size, class ForwardIt >
 ForwardIt uninitialized_copy_n(InputIt first, Size count, ForwardIt d_first)
 {
@@ -124,6 +147,29 @@ ForwardIt uninitialized_move(InputIt first, InputIt last, ForwardIt d_first)
 		while (d_first != current)
 		{
 			(d_first++)->~ValueType();
+		}
+		throw;
+	}
+}
+
+template< class BidirIt1, class BidirIt2 >
+BidirIt2 uninitialized_move_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
+{
+	using ValueType = typename std::iterator_traits<BidirIt2>::value_type;
+	BidirIt2 current = d_last;
+	try
+	{
+		while (first != last)
+		{
+			new (static_cast<void*>(MoeSTL::addressof(*(--current)))) ValueType(MoeSTL::move(*(--last)));
+		}
+		return current;
+	}
+	catch (...)
+	{
+		while (d_last != current)
+		{
+			(--d_last)->~ValueType();
 		}
 		throw;
 	}

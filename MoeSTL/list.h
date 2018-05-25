@@ -40,69 +40,9 @@ namespace MoeSTL {
 		struct list_members : list_node<T>
 		{
 			list_members() : list_node{this, this }, m_iSize(0) {}
-			list_node *&head() { return next; }
-			list_node *&tail() { return prev; }
+			list_node *&head() const { return const_cast<list_node *&>(next); }
+			list_node *&tail() const { return const_cast<list_node *&>(prev); }
 			size_t m_iSize;
-		};
-
-		template<class T>
-		class const_list_iterator
-		{
-		public:
-			using iterator_category = std::bidirectional_iterator_tag;
-			using value_type = const T;
-			using difference_type = ptrdiff_t;
-			using pointer = value_type * ;
-			using reference = value_type & ;
-
-			explicit const_list_iterator(list_node<value_type> *p) : ptr(p) {}
-			const_list_iterator& operator++() { return ptr = ptr->next, *this; }
-			const_list_iterator operator++(int) { auto ret = *this; ptr = ptr->next; return ret; }
-			const_list_iterator& operator--() { return ptr = ptr->prev, *this; }
-			const_list_iterator operator--(int) { auto ret = *this; ptr = ptr->prev; return ret; }
-
-			bool operator==(const_list_iterator other) const { return ptr == other.ptr; }
-			bool operator!=(const_list_iterator other) const { return !(*this == other); }
-			bool operator<(const_list_iterator other) const { return ptr < other.ptr; }
-			bool operator<=(const_list_iterator other) const { return ptr <= other.ptr; }
-			bool operator>(const_list_iterator other) const { return ptr > other.ptr; }
-			bool operator>=(const_list_iterator other) const { return ptr >= other.ptr; }
-
-			reference operator*() { return static_cast<list_node_with_data<value_type> *>(ptr)->data; }
-			pointer operator->() { return &(static_cast<list_node_with_data<value_type> *>(ptr)->data); }
-		private:
-			list_node<value_type> *ptr;
-		};
-
-		template<class T>
-		class list_iterator
-		{
-		public:
-			using iterator_category = std::bidirectional_iterator_tag;
-			using value_type = T;
-			using difference_type = ptrdiff_t;
-			using pointer = value_type * ;
-			using reference = value_type & ;
-
-			explicit list_iterator(list_node<value_type> *p) : ptr(p) {}
-			list_iterator& operator++() { return ptr = ptr->next, *this; }
-			list_iterator operator++(int) { auto ret = *this; ptr = ptr->next; return ret; }
-			list_iterator& operator--() { return ptr = ptr->prev, *this; }
-			list_iterator operator--(int) { auto ret = *this; ptr = ptr->prev; return ret; }
-
-			bool operator==(list_iterator other) const { return ptr == other.ptr; }
-			bool operator!=(list_iterator other) const { return !(*this == other); }
-			bool operator<(list_iterator other) const { return ptr < other.ptr; }
-			bool operator<=(list_iterator other) const { return ptr <= other.ptr; }
-			bool operator>(list_iterator other) const { return ptr > other.ptr; }
-			bool operator>=(list_iterator other) const { return ptr >= other.ptr; }
-
-			reference operator*() { return static_cast<list_node_with_data<value_type> *>(ptr)->data; }
-			pointer operator->() { return &(static_cast<list_node_with_data<value_type> *>(ptr)->data); }
-
-			operator const_list_iterator<T>() { return const_list_iterator<T>(ptr); }
-		private:
-			list_node<value_type> *ptr;
 		};
 	}
 
@@ -121,23 +61,84 @@ public:
 	using pointer = typename std::allocator_traits<Allocator>::pointer;
 	using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
 
-
-	using iterator = list_internal::list_iterator<T>;
-	using const_iterator = list_internal::const_list_iterator<T>;
-	using reverse_iterator = std::reverse_iterator<iterator>;
-	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
 private:
 	using node_t = list_internal::list_node<T>;
 	using node_with_data_t = list_internal::list_node_with_data<T>;
 
 	using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_with_data_t>;
 	using rebind_traits = typename std::allocator_traits<rebind_alloc>;
-	
+
 	rebind_alloc get_rebind()
 	{
 		return get_allocator();
 	}
+public:
+
+	//using iterator = list_internal::list_iterator<T>;
+	//using const_iterator = list_internal::const_list_iterator<T>;
+
+	class const_iterator
+	{
+		friend class list;
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = const T;
+		using difference_type = ptrdiff_t;
+		using pointer = value_type * ;
+		using reference = value_type & ;
+
+		explicit const_iterator(node_t *p) : ptr(p) {}
+		const_iterator& operator++() { return ptr = ptr->next, *this; }
+		const_iterator operator++(int) { auto ret = *this; ptr = ptr->next; return ret; }
+		const_iterator& operator--() { return ptr = ptr->prev, *this; }
+		const_iterator operator--(int) { auto ret = *this; ptr = ptr->prev; return ret; }
+
+		bool operator==(const_iterator other) const { return ptr == other.ptr; }
+		bool operator!=(const_iterator other) const { return !(*this == other); }
+		bool operator<(const_iterator other) const { return ptr < other.ptr; }
+		bool operator<=(const_iterator other) const { return ptr <= other.ptr; }
+		bool operator>(const_iterator other) const { return ptr > other.ptr; }
+		bool operator>=(const_iterator other) const { return ptr >= other.ptr; }
+
+		reference operator*() { return static_cast<node_with_data_t *>(ptr)->data; }
+		pointer operator->() { return &(static_cast<node_with_data_t *>(ptr)->data); }
+	private:
+		node_t *ptr;
+	};
+
+	class iterator
+	{
+		friend class list;
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = T;
+		using difference_type = ptrdiff_t;
+		using pointer = value_type * ;
+		using reference = value_type & ;
+
+		explicit iterator(node_t *p) : ptr(p) {}
+		iterator& operator++() { return ptr = ptr->next, *this; }
+		iterator operator++(int) { auto ret = *this; ptr = ptr->next; return ret; }
+		iterator& operator--() { return ptr = ptr->prev, *this; }
+		iterator operator--(int) { auto ret = *this; ptr = ptr->prev; return ret; }
+
+		bool operator==(iterator other) const { return ptr == other.ptr; }
+		bool operator!=(iterator other) const { return !(*this == other); }
+		bool operator<(iterator other) const { return ptr < other.ptr; }
+		bool operator<=(iterator other) const { return ptr <= other.ptr; }
+		bool operator>(iterator other) const { return ptr > other.ptr; }
+		bool operator>=(iterator other) const { return ptr >= other.ptr; }
+
+		reference operator*() { return static_cast<node_with_data_t *>(ptr)->data; }
+		pointer operator->() { return &(static_cast<node_with_data_t *>(ptr)->data); }
+
+		operator const_iterator() { return const_iterator(ptr); }
+	private:
+		node_t *ptr;
+	};
+
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 public:
 	~list() { clear(); }
@@ -182,7 +183,7 @@ public:
 	}
 	const_iterator cbegin() const noexcept
 	{
-		return const_iterator(head());
+		return const_iterator(static_cast<node_t *>(head()));
 	}
 	const_iterator cend() const noexcept
 	{
@@ -241,6 +242,45 @@ public:
 
 		tail() = head() = this;
 		m_iSize = 0;
+	}
+
+	iterator erase(const_iterator pos)
+	{
+		node_with_data_t *p = static_cast<node_with_data_t *>(pos.ptr);
+		node_t *next = p->next;
+		node_t *prev = p->prev;
+
+		p->data.~T();
+		get_rebind().deallocate(p, 1);
+
+		next->prev = prev;
+		prev->next = next;
+		--m_iSize;
+		return iterator(next);
+	}
+
+	iterator erase(const_iterator first, const_iterator last)
+	{
+		node_t *pLeft = static_cast<node_t *>(first.ptr);
+		node_t *pRight = static_cast<node_t *>(last.ptr);
+
+		node_t *next = pRight;
+		node_t *prev = pLeft->prev;
+
+		node_t *p = pLeft;
+		while (p && p != pRight)
+		{
+			node_with_data_t *cur = static_cast<node_with_data_t *>(p);
+			p = p->next;
+
+			cur->data.~T(); // deconstruct
+			get_rebind().deallocate(cur, 1); // free memory
+			--m_iSize;
+		}
+
+		next->prev = prev;
+		prev->next = next;
+		return iterator(next);
 	}
 
 	void push_back(const T& value)
