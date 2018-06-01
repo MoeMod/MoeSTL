@@ -73,7 +73,9 @@ public:
 		}
 		catch (...) // if(m_pData)
 		{
-			~vector();
+			get_allocator().deallocate(m_pData, m_iCapacity);
+			m_pData = nullptr;
+			m_iCapacity = 0;
 			throw;
 		}
 	}
@@ -87,7 +89,9 @@ public:
 		}
 		catch (...) // if(m_pData)
 		{
-			~vector();
+			get_allocator().deallocate(m_pData, m_iCapacity);
+			m_pData = nullptr;
+			m_iCapacity = 0;
 			throw;
 		}
 	}
@@ -102,7 +106,9 @@ public:
 		}
 		catch (...) // if(m_pData)
 		{
-			~vector();
+			get_allocator().deallocate(m_pData, m_iCapacity);
+			m_pData = nullptr;
+			m_iCapacity = 0;
 			throw;
 		}
 	}
