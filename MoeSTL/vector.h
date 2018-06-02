@@ -40,7 +40,7 @@ namespace vector_internal
 template<
 	class T,
 	class Allocator = std::allocator<T>
-> class vector : private vector_internal::vector_members<T>, public allocator_base<Allocator>
+> class vector : private vector_internal::vector_members<T>, private allocator_base<Allocator>
 // in order to put those members before Allocator, i have to put them in a base class...
 {
 public:

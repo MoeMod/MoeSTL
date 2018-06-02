@@ -48,7 +48,7 @@ namespace MoeSTL {
 template<
 	class T,
 	class Allocator = std::allocator<T>
-> class list : private list_internal::list_members<T>, public allocator_base<Allocator>
+> class list : private list_internal::list_members<T>, private allocator_base<Allocator>
 {
 public:
 	using value_type = T;
