@@ -23,7 +23,6 @@ namespace MoeSTL {
 
 	namespace list_internal
 	{
-		template<class T>
 		struct list_node
 		{
 			list_node *next;
@@ -31,13 +30,13 @@ namespace MoeSTL {
 		};
 
 		template<class T>
-		struct list_node_with_data : list_node<T>
+		struct list_node_with_data : list_node
 		{
 			T data;
 		};
 
 		template<class T>
-		struct list_members : list_node<T>
+		struct list_members : list_node
 		{
 			list_members() : list_node{this, this }, m_iSize(0) {}
 			list_node *&head() const { return const_cast<list_node *&>(next); }
@@ -62,7 +61,7 @@ public:
 	using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
 
 private:
-	using node_t = list_internal::list_node<T>;
+	using node_t = list_internal::list_node;
 	using node_with_data_t = list_internal::list_node_with_data<T>;
 
 	using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_with_data_t>;
