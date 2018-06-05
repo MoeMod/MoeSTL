@@ -152,10 +152,16 @@
     <ClInclude Include="MoeSTL\array.h" />
     <ClInclude Include="MoeSTL\extra\allocator_base.h" />
     <ClInclude Include="MoeSTL\extra\pointer_iterator.h" />
+    <ClInclude Include="MoeSTL\functional.h" />
+    <ClInclude Include="MoeSTL\functional\placeholders.h" />
+    <ClInclude Include="MoeSTL\functional\reference_wrapper.h" />
     <ClInclude Include="MoeSTL\iterator.h" />
     <ClInclude Include="MoeSTL\list.h" />
     <ClInclude Include="MoeSTL\memory.h" />
     <ClInclude Include="MoeSTL\memory\uninitialized.h" />
+    <ClInclude Include="MoeSTL\type_traits.h" />
+    <ClInclude Include="MoeSTL\type_traits\type_transform.h" />
+    <ClInclude Include="MoeSTL\type_traits\value_wrapper.h" />
     <ClInclude Include="MoeSTL\utility\move.h" />
     <ClInclude Include="MoeSTL\utility\swap.h" />
     <ClInclude Include="MoeSTL\vector.h" />

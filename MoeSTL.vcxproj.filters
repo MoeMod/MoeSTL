@@ -31,6 +31,12 @@
     <Filter Include="MoeSTL\utility">
       <UniqueIdentifier>{da20adc6-fc75-46bb-b0f3-5cabc6965897}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MoeSTL\functional">
+      <UniqueIdentifier>{89f34a19-3de7-495c-a3a4-99e8b5a55719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MoeSTL\type_traits">
+      <UniqueIdentifier>{bd3b3471-c3a8-46a3-8549-b73de66d6e18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MoeSTL.cpp">
@@ -79,6 +85,24 @@
     </ClInclude>
     <ClInclude Include="MoeSTL\list.h">
       <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\functional\placeholders.h">
+      <Filter>MoeSTL\functional</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\type_traits\value_wrapper.h">
+      <Filter>MoeSTL\type_traits</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\functional.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\type_traits.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\functional\reference_wrapper.h">
+      <Filter>MoeSTL\functional</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\type_traits\type_transform.h">
+      <Filter>MoeSTL\type_traits</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
