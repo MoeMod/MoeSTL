@@ -418,7 +418,7 @@ public:
 		++m_iSize;
 	}
 
-	void push_front(const T&& value)
+	void push_front(T&& value)
 	{
 		node_with_data_t *p = get_rebind().allocate(1);
 
