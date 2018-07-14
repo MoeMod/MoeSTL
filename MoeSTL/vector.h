@@ -18,10 +18,15 @@ using std::reverse_iterator;
 #include <tuple>
 using std::tie;
 
+#include <algorithm>
+using std::rotate;
+
 #include "utility/move.h"
 #include "memory/uninitialized.h"
 #include "extra/allocator_base.h"
 #include "extra/pointer_iterator.h"
+#include "algorithm/for_each.h"
+#include "algorithm/copy.h"
 
 namespace MoeSTL {
 
@@ -300,6 +305,7 @@ public:
 	{
 		if (m_iCapacity >= new_cap)
 			return;
+
 		// alloc memory for new_cap
 		auto new_data = get_allocator().allocate(new_cap); // try
 
@@ -337,95 +343,42 @@ public:
 
 	void clear() noexcept
 	{
-		for_each(begin(), end(), [](const T &elem) {elem.~T(); });
+		MoeSTL::for_each(begin(), end(), [](const T &elem) {elem.~T(); });
 		m_iSize = 0;
 	}
 
 	iterator insert(const_iterator pos, const T& value)
 	{
-		return insert(pos, 1, value);
+		size_type n = distance(cbegin(), pos);
+		push_back(value); // try
+		return std::rotate(begin() + n, end() - 1, end()) - 1;
 	}
 	iterator insert(const_iterator pos, T&& value)
 	{
 		size_type n = distance(cbegin(), pos);
-		reserve(size() + 1);
-		auto count = 1;
-
-		// move to back
-		MoeSTL::uninitialized_move_backward(data() + n, data() + size(), data() + size() + count); // assume nothrow
-		// construct new elem
-		try
-		{
-			new(m_pData + n) T(MoeSTL::move(value));
-		}
-		catch (...)
-		{
-			MoeSTL::uninitialized_move(data() + size(), data() + size() + count, data() + n); // assume nothrow
-			throw;
-		}
-		++m_iSize;
-		return begin() + n;
+		push_back(MoeSTL::move(value)); // try
+		return std::rotate(begin() + n, end() - 1, end()) - 1;
 	}
 
 	iterator insert(const_iterator pos, size_type count, const T& value)
 	{
 		size_type n = distance(cbegin(), pos);
-		
-		if (count)
-		{
-			// alloc memory
-			reserve(size() + count);
-			
-			// move to back
-			MoeSTL::uninitialized_move_backward(data() + n, data() + size(), data() + size() + count); // assume nothrow
-
-		}
-
-		// construct new elems
-		try
-		{
-			MoeSTL::uninitialized_fill(ret, count, data() + n); // try
-		}
-		catch (...)
-		{
-			// move elements back
-			MoeSTL::uninitialized_move(data() + size(), data() + size() + count, data() + n); // assume nothrow
-			throw;
-		}
-
+		reserve(size() + count);
+		MoeSTL::uninitialized_fill_n(data() + size(), count, value); // try
 		m_iSize += count;
-		return begin() + n;
+
+		return std::rotate(begin() + n, end() - count, end()) - count;
 	}
 
 	template< class InputIt >
 	iterator insert(const_iterator pos, InputIt first, InputIt last)
 	{
 		size_type n = distance(cbegin(), pos);
-		auto count = distance(first, last);
-
-		if (count)
-		{
-			// alloc memory
-			reserve(size() + count);
-			
-			// move to back
-			MoeSTL::uninitialized_move_backward(data() + n, data() + size(), data() + size() + count); // assume nothrow
-		}
-
-		// construct new elems
-		try
-		{
-			MoeSTL::uninitialized_copy(first, last, data() + n); // try
-		}
-		catch (...)
-		{
-			// move elements back
-			MoeSTL::uninitialized_move(data() + size(), data() + size() + count, data() + n); // assume nothrow
-			throw;
-		}
-
+		reserve(size() + count);
+		MoeSTL::uninitialized_copy(first, last, data() + size()); // try
 		m_iSize += count;
-		return begin() + n;
+
+		return std::rotate(begin() + n, end() - count, end()) - count;
 	}
 
 	iterator insert(const_iterator pos, std::initializer_list<T> ilist)
@@ -435,22 +388,14 @@ public:
 
 	void push_back(const T& value)
 	{
-		if (m_iSize == m_iCapacity)
-		{
-			auto new_capacity = m_iSize ? m_iSize * 2 : 4;
-			reserve(new_capacity);
-		}
+		reserve(size() + 1);
 		
 		new(m_pData + m_iSize) T(value); // try
 		++m_iSize;
 	}
 	void push_back(T&& value)
 	{
-		if (m_iSize == m_iCapacity)
-		{
-			auto new_capacity = m_iSize ? m_iSize * 2 : 4;
-			reserve(new_capacity);
-		}
+		reserve(size() + 1);
 
 		new(m_pData + m_iSize) T(MoeSTL::move(value)); // try
 		++m_iSize;
@@ -458,11 +403,7 @@ public:
 	template< class... Args >
 	void emplace_back(Args&&... args)
 	{
-		if (m_iSize == m_iCapacity)
-		{
-			auto new_capacity = m_iSize ? m_iSize * 2 : 4;
-			reserve(new_capacity);
-		}
+		reserve(size() + 1);
 		
 		new(m_pData + m_iSize) T(std::forward<Args>(args)...); // try
 		++m_iSize;
@@ -471,14 +412,17 @@ public:
 	iterator erase(iterator pos)
 	{
 		MoeSTL::move(pos + 1, end(), pos); // pos isn't in [pos + 1, end)
-		resize(size() - 1);
+		pop_back();
 		return pos;
 	}
 
 	iterator erase(iterator first, iterator last)
 	{
+		size_type count = distance(first, last);
 		MoeSTL::move(last, end(), first); // first isn't in [last + 1, end)
-		resize(size() - distance(first, last));
+
+		MoeSTL::for_each(end() - count, end(), [](const T &elem) {elem.~T(); }); // nothrow
+		m_iSize -= count;
 		return first;
 	}
 
@@ -490,7 +434,19 @@ public:
 
 	void resize(size_type count)
 	{
-		return resize(count, T{});
+		if (count < m_iSize)
+		{
+			for_each(begin() + count, end(), [](const T &elem) {elem.~T(); }); // nothrow
+			m_iSize = count;
+		}
+		else if (count > m_iSize)
+		{
+			reserve(count);
+
+			// construct items
+			MoeSTL::uninitialized_fill_n(m_pData + m_iSize, count - m_iSize, T{}); // try
+			m_iSize = count;
+		}
 	}
 
 	void resize(size_type count, const value_type& value)
