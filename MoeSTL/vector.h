@@ -334,11 +334,9 @@ public:
 	{
 		if (m_iCapacity == m_iSize)
 			return;
-		using MoeSTL::move;
 		// move all elements to tempory object, and swap with it
-		swap(vector(move(*this)));
+		swap(vector(*this));
 		// so that you will get the new shrink one and the old one is automatically deleted
-		// if nothrow move, strong exception safety
 	}
 
 	void clear() noexcept
