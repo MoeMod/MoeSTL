@@ -64,4 +64,4 @@ Developing.
 * [ ] forward
 * [ ] exchange
 * [ ] declval
-* [ ] integer_sequence
+* [x] integer_sequence
