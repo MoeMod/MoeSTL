@@ -162,6 +162,8 @@
     <ClInclude Include="MoeSTL\type_traits.h" />
     <ClInclude Include="MoeSTL\type_traits\type_transform.h" />
     <ClInclude Include="MoeSTL\type_traits\value_wrapper.h" />
+    <ClInclude Include="MoeSTL\utility.h" />
+    <ClInclude Include="MoeSTL\utility\integer_sequence.h" />
     <ClInclude Include="MoeSTL\utility\move.h" />
     <ClInclude Include="MoeSTL\utility\swap.h" />
     <ClInclude Include="MoeSTL\vector.h" />

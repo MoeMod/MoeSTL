@@ -104,5 +104,11 @@
     <ClInclude Include="MoeSTL\type_traits\type_transform.h">
       <Filter>MoeSTL\type_traits</Filter>
     </ClInclude>
+    <ClInclude Include="MoeSTL\utility.h">
+      <Filter>MoeSTL</Filter>
+    </ClInclude>
+    <ClInclude Include="MoeSTL\utility\integer_sequence.h">
+      <Filter>MoeSTL\utility</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
