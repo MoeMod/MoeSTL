@@ -48,6 +48,12 @@ template<
 > class vector : private vector_internal::vector_members<T>, private allocator_base<Allocator>
 // in order to put those members before Allocator, i have to put them in a base class...
 {
+private:
+	using vector_internal::vector_members<T>::m_pData;
+	using vector_internal::vector_members<T>::m_iSize;
+	using vector_internal::vector_members<T>::m_iCapacity;
+	using allocator_base<Allocator>::get_allocator;
+
 public:
 	using value_type = T;
 	using allocator_type = Allocator;
@@ -65,9 +71,9 @@ public:
 	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 	vector()
-		 : vector_members{ nullptr , 0, 0 } {}
+		 : vector_internal::vector_members<T>{ nullptr , 0, 0 } {}
 	explicit vector(const Allocator& alloc)
-		 : vector_members{ nullptr , 0, 0 }, allocator_base(alloc) {}
+		 : vector_internal::vector_members<T>{ nullptr , 0, 0 }, allocator_base<Allocator>(alloc) {}
 
 	vector(size_type count, const T &value, const Allocator& alloc = Allocator())
 		: vector(alloc)
@@ -111,7 +117,7 @@ public:
 		}
 		catch (...) // if(m_pData)
 		{
-			get_allocator().deallocate(m_pData, m_iCapacity);
+			this->get_allocator().deallocate(m_pData, m_iCapacity);
 			m_pData = nullptr;
 			m_iCapacity = 0;
 			throw;
@@ -120,7 +126,7 @@ public:
 
 	vector(const vector& other) : vector(other.begin(), other.end()){}
 	vector(const vector& other, const Allocator& alloc)
-		: vector(other), vector_base{ alloc } {}
+		: vector(other), allocator_base<Allocator>{ alloc } {}
 
 	void swap(vector &other) noexcept
 	{
@@ -134,7 +140,7 @@ public:
 		swap((vector &)other);
 	}
 	vector(vector&& other, const Allocator& alloc)
-		: vector(other), vector_base{ alloc } {}
+		: vector(other), allocator_base<Allocator>{ alloc } {}
 
 	vector(std::initializer_list<T> init, const Allocator& alloc = Allocator())
 		: vector(init.begin(), init.end(), alloc) {}
@@ -191,14 +197,14 @@ public:
 	reference at(size_type pos)
 	{
 		if (pos >= m_iSize)
-			throw out_of_range();
+			throw out_of_range("out_of_range");
 		return (*this)[pos];
 	}
 
 	const_reference at(size_type pos) const
 	{
 		if (pos >= m_iSize)
-			throw out_of_range();
+			throw out_of_range("out_of_range");
 		return (*this)[pos];
 	}
 
@@ -298,7 +304,7 @@ public:
 	}
 	size_type max_size() const noexcept
 	{
-		return -1;
+		return (size_type)-1;
 	}
 
 	void reserve(size_type new_cap)
@@ -307,22 +313,16 @@ public:
 			return;
 
 		// alloc memory for new_cap
-		auto new_data = get_allocator().allocate(new_cap); // try
+		auto deleter = [this, new_cap](T *new_data) { this->get_allocator().deallocate(new_data, new_cap); };
+		std::unique_ptr<T, decltype(deleter)> new_data (get_allocator().allocate(new_cap), MoeSTL::move(deleter)); // try
 
 		// move all elements to there and deconstruct previous object
-		try
-		{
-			MoeSTL::uninitialized_move(begin(), end(), new_data);
-		}
-		catch (...)
-		{
-			get_allocator().deallocate(new_data, new_cap); // basic exception safety
-			throw;
-		}
+		uninitialized_nothrow_move_or_copy(begin(), end(), new_data.get());
 			
 		// free previous space
+		MoeSTL::for_each(begin(), end(), [](const T &elem) {elem.~T(); });
 		get_allocator().deallocate(m_pData, m_iCapacity);
-		m_pData = new_data;
+		m_pData = new_data.release();
 		m_iCapacity = new_cap;
 	}
 	size_type capacity() const noexcept
@@ -372,6 +372,7 @@ public:
 	iterator insert(const_iterator pos, InputIt first, InputIt last)
 	{
 		size_type n = distance(cbegin(), pos);
+		size_type count = distance(first, last);
 		reserve(size() + count);
 		MoeSTL::uninitialized_copy(first, last, data() + size()); // try
 		m_iSize += count;
@@ -409,7 +410,7 @@ public:
 
 	iterator erase(iterator pos)
 	{
-		MoeSTL::move(pos + 1, end(), pos); // pos isn't in [pos + 1, end)
+		nothrow_move_or_copy(pos + 1, end(), pos); // pos isn't in [pos + 1, end)
 		pop_back();
 		return pos;
 	}
@@ -417,7 +418,7 @@ public:
 	iterator erase(iterator first, iterator last)
 	{
 		size_type count = distance(first, last);
-		MoeSTL::move(last, end(), first); // first isn't in [last + 1, end)
+		nothrow_move_or_copy(last, end(), first); // first isn't in [last + 1, end)
 
 		MoeSTL::for_each(end() - count, end(), [](const T &elem) {elem.~T(); }); // nothrow
 		m_iSize -= count;
@@ -463,7 +464,32 @@ public:
 			m_iSize = count;
 		}
 	}
-	
+
+private:
+	template< class InputIt, class OutputIt >
+	static auto nothrow_move_or_copy(InputIt first, InputIt last, OutputIt d_first)
+	-> typename std::enable_if<std::is_nothrow_move_assignable<value_type>::value, OutputIt>::type
+	{
+		return MoeSTL::move(first, last, d_first);
+	}
+	template< class InputIt, class OutputIt >
+	static auto nothrow_move_or_copy(InputIt first, InputIt last, OutputIt d_first)
+	-> typename std::enable_if<!std::is_nothrow_move_assignable<value_type>::value, OutputIt>::type
+	{
+		return MoeSTL::copy(first, last, d_first);
+	}
+	template< class InputIt, class OutputIt >
+	static auto uninitialized_nothrow_move_or_copy(InputIt first, InputIt last, OutputIt d_first)
+	-> typename std::enable_if<std::is_nothrow_move_assignable<value_type>::value, OutputIt>::type
+	{
+		return MoeSTL::uninitialized_move(first, last, d_first);
+	}
+	template< class InputIt, class OutputIt >
+	static auto uninitialized_nothrow_move_or_copy(InputIt first, InputIt last, OutputIt d_first)
+	-> typename std::enable_if<!std::is_nothrow_move_assignable<value_type>::value, OutputIt>::type
+	{
+		return MoeSTL::uninitialized_copy(first, last, d_first);
+	}
 };
 
 template<class T>
